@@ -25,7 +25,7 @@ Welcome, Stylist! This is a super cute, lightweight web app designed to be your 
     * A cute, collapsible accordion keeps the list tidy!
 
 * **✅ Interactive Checklist:**
-    * A customizable **Daily To-Do List** with heart-shaped checkboxes.
+    * A WIP **Daily To-Do List** with heart-shaped checkboxes.
     * Remembers your completed tasks and can be reset with a single click.
 
 * **💖 Magical UI:**
