@@ -1,0 +1,192 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const serverOffsets = { America: -7, Europe: 1, Asia: 8 };
+    let selectedServer = localStorage.getItem('selectedServer') || 'America';
+    let countdownInterval;
+
+    // --- Tab & UI Setup ---
+    function setupTabs() {
+        const navButtons = document.querySelectorAll('.nav-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        navButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                navButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                const targetId = button.getAttribute('data-target');
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    if (content.id === targetId) content.classList.add('active');
+                });
+            });
+        });
+    }
+
+    function setupCustomSelect() {
+        const customSelect = document.querySelector('.custom-select');
+        const selectTrigger = document.querySelector('.select-trigger span');
+        const options = document.querySelectorAll('.option');
+        const initialOption = document.querySelector(`.option[data-value="${selectedServer}"]`);
+        if (initialOption) selectTrigger.innerHTML = initialOption.innerHTML;
+        customSelect.addEventListener('click', () => customSelect.classList.toggle('open'));
+        options.forEach(option => {
+            option.addEventListener('click', () => {
+                selectedServer = option.getAttribute('data-value');
+                selectTrigger.innerHTML = option.innerHTML;
+                localStorage.setItem('selectedServer', selectedServer);
+            });
+        });
+        document.addEventListener('click', (e) => {
+            if (!customSelect.contains(e.target)) customSelect.classList.remove('open');
+        });
+    }
+
+    function setupTodoList() {
+        // Updated daily tasks based on community feedback
+        const dailyTasks = [
+            "Complete Daily Wishes",
+            "Spend all Vital Energy",
+            "Claim Pear-Pal Dig rewards",
+            "Check Store for free daily/weekly items",
+            "Complete limited-time event tasks",
+            "Check in-game mail and announcements"
+        ];
+        const taskListEl = document.getElementById('daily-tasks');
+        const resetBtn = document.getElementById('reset-tasks');
+        let savedTasks = JSON.parse(localStorage.getItem('dailyTasks')) || {};
+        const renderTasks = () => {
+            taskListEl.innerHTML = '';
+            dailyTasks.forEach((task) => {
+                const isCompleted = savedTasks[task] || false;
+                const li = document.createElement('li');
+                li.className = isCompleted ? 'completed' : '';
+                li.innerHTML = `<span class="heart-checkbox">${isCompleted ? '♥' : '♡'}</span> ${task}`;
+                li.addEventListener('click', () => toggleTask(task));
+                taskListEl.appendChild(li);
+            });
+        };
+        const toggleTask = (task) => { savedTasks[task] = !savedTasks[task]; localStorage.setItem('dailyTasks', JSON.stringify(savedTasks)); renderTasks(); };
+        resetBtn.addEventListener('click', () => { savedTasks = {}; localStorage.setItem('dailyTasks', JSON.stringify(savedTasks)); renderTasks(); });
+        renderTasks();
+    }
+
+    function setupSparkleEffect() {
+        let isThrottled = false;
+        document.body.addEventListener('mousemove', (e) => {
+            if (isThrottled) return;
+            isThrottled = true;
+            setTimeout(() => { isThrottled = false; }, 30);
+
+            const sparkle = document.createElement('div');
+            sparkle.classList.add('sparkle');
+
+            sparkle.style.left = `${e.clientX}px`;
+            sparkle.style.top = `${e.clientY}px`;
+
+            sparkle.style.backgroundColor = ['#ff69b4', '#ff85c8', '#ffb6c1'][Math.floor(Math.random() * 3)];
+            sparkle.style.transform = `scale(${Math.random() * 0.7 + 0.3})`;
+
+            document.body.appendChild(sparkle);
+            sparkle.addEventListener('animationend', () => sparkle.remove());
+        });
+    }
+
+    function setupHeartExplosion() {
+        document.addEventListener('click', (e) => {
+            // Don't trigger explosion on interactive elements
+            if (e.target.closest('button, .custom-select, a, li')) {
+                return;
+            }
+            for (let i = 0; i < 10; i++) {
+                const heart = document.createElement('div');
+                heart.classList.add('heart-particle');
+                heart.innerHTML = '💖';
+
+                heart.style.left = `${e.clientX}px`;
+                heart.style.top = `${e.clientY}px`;
+
+                const angle = Math.random() * 2 * Math.PI;
+                const distance = Math.random() * 40 + 40;
+                const x = Math.cos(angle) * distance;
+                const y = Math.sin(angle) * distance;
+
+                heart.style.setProperty('--tx', `${x}px`);
+                heart.style.setProperty('--ty', `${y}px`);
+
+                document.body.appendChild(heart);
+                heart.addEventListener('animationend', () => heart.remove());
+            }
+        });
+    }
+
+    async function fetchAndRenderData() {
+        const maintenanceContainer=document.getElementById("maintenance-countdown-container");try{const e="Version/1.7",t=`https://infinity-nikki.fandom.com/api.php?action=query&prop=revisions&titles=${encodeURIComponent(e)}&rvprop=content&format=json&origin=*`,n=await fetch(t),a=await n.json(),s=a.query.pages[Object.keys(a.query.pages)[0]].revisions[0]["*"],i=s.match(/\|date_start\s*=\s*(\d{4})/),o=s.match(/==Maintenance==\s*\n===Season Begin===\s*\n(\w+\s\d+),\s(\d{2}:\d{2})\s+to\s+(\d{2}:\d{2})\s+\(UTC-7\)/);o&&i?maintenanceContainer.innerHTML=`<div class="event-title">${e}</div><div data-countdown-status data-start-time="${new Date(`${o[1]}, ${i[1]} ${o[2]}:00 UTC-07:00`).getTime()}" data-end-time="${new Date(`${o[1]}, ${i[1]} ${o[3]}:00 UTC-07:00`).getTime()}"></div><div class="countdown-flicker" data-countdown-target data-start-time="${new Date(`${o[1]}, ${i[1]} ${o[2]}:00 UTC-07:00`).getTime()}" data-end-time="${new Date(`${o[1]}, ${i[1]} ${o[3]}:00 UTC-07:00`).getTime()}"></div>`:maintenanceContainer.innerHTML="No upcoming maintenance found."}catch(e){console.error("Failed to fetch maintenance info:",e),maintenanceContainer.innerHTML="Could not load info."}try{const e=`https://infinity-nikki.fandom.com/api.php?action=parse&page=Event&format=json&origin=*`,t=await fetch(e),n=await t.json(),a=new DOMParser().parseFromString(n.parse.text["*"],"text/html"),s=new Date;let i=[];a.querySelectorAll("table.article-table tr").forEach(e=>{const t=e.querySelectorAll("td");if(t.length<2)return;const n=t[0].textContent.trim(),a=t[1].textContent.trim().split(/\s*(?:–|-)\s*/);if(a.length<2)return;const o=new Date(a[0].trim()+" UTC-07:00"),r=new Date(a[1].trim()+" UTC-07:00");r>s&&!isNaN(o.getTime())&&i.push({name:n,start:o,end:r})}),renderEvents(i)}catch(e){console.error("Failed to fetch events:",e),document.getElementById("event-accordions").innerHTML="<p>Could not load events.</p>"}
+    }
+
+    function renderEvents(events) {
+        const accordionsContainer = document.getElementById('event-accordions');
+        accordionsContainer.innerHTML = '';
+        const now = new Date();
+        const ongoing = events.filter(e => e.start <= now).sort((a,b) => a.end - b.end);
+        const upcoming = events.filter(e => e.start > now).sort((a,b) => a.start - b.start);
+        const createAccordion = (title, eventList, expanded = false) => {
+            if (eventList.length === 0) return '';
+            const eventsHtml = eventList.map(event => `<div class="event"><div class="event-title">${event.name}</div><div data-countdown-status data-start-time="${event.start.getTime()}" data-end-time="${event.end.getTime()}"></div><div class="event-countdown countdown-flicker" data-countdown-target data-start-time="${event.start.getTime()}" data-end-time="${event.end.getTime()}"></div></div>`).join('');
+            return `<div class="accordion-group"><div class="accordion ${expanded ? 'active' : ''}"><div class="header">${title} (${eventList.length})</div><div class="content" style="max-height: ${expanded ? '1000px' : '0'}">${eventsHtml}</div></div></div>`;
+        };
+        accordionsContainer.innerHTML = createAccordion('Ongoing Events', ongoing, true) + createAccordion('Upcoming Events', upcoming);
+        if (accordionsContainer.innerHTML === '') accordionsContainer.innerHTML = '<p>No upcoming or active events.</p>';
+        document.querySelectorAll('.accordion .header').forEach(header => {
+            header.addEventListener('click', () => {
+                const accordion = header.parentElement;
+                accordion.classList.toggle('active');
+                const content = header.nextElementSibling;
+                content.style.maxHeight = accordion.classList.contains('active') ? content.scrollHeight + "px" : "0";
+            });
+        });
+    }
+
+    function masterTimerTick() {
+        const now = new Date();
+        const serverTime = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours() + serverOffsets[selectedServer], now.getUTCMinutes(), now.getUTCSeconds());
+        document.getElementById('server-time').textContent = serverTime.toTimeString().split(' ')[0];
+
+        let dailyReset = new Date(serverTime);
+        dailyReset.setUTCHours(4, 0, 0, 0);
+        if (serverTime >= dailyReset) dailyReset.setUTCDate(dailyReset.getUTCDate() + 1);
+        document.querySelector('[data-countdown-target="daily-reset"]').textContent = formatHMS(dailyReset - serverTime);
+
+        let weeklyReset = new Date(serverTime);
+        const dayOfWeek = weeklyReset.getUTCDay();
+        const daysUntilMonday = (1 - dayOfWeek + 7) % 7;
+        weeklyReset.setUTCDate(weeklyReset.getUTCDate() + daysUntilMonday);
+        weeklyReset.setUTCHours(4, 0, 0, 0);
+        if (serverTime >= weeklyReset) weeklyReset.setUTCDate(weeklyReset.getUTCDate() + 7);
+        document.querySelector('[data-countdown-target="weekly-reset"]').textContent = formatDHM(weeklyReset - serverTime);
+
+        document.querySelectorAll('[data-countdown-target]:not([data-countdown-target="daily-reset"]):not([data-countdown-target="weekly-reset"])').forEach(el => {
+            const startTime = new Date(parseInt(el.dataset.startTime));
+            const endTime = new Date(parseInt(el.dataset.endTime));
+            el.textContent = formatDHM((now < startTime) ? startTime - now : endTime - now);
+        });
+        document.querySelectorAll('[data-countdown-status]').forEach(el => {
+            el.textContent = (now < new Date(parseInt(el.dataset.startTime))) ? 'Starts in:' : 'Ends in:';
+        });
+    }
+
+    const formatDHM = (diff) => { if (diff < 0) return "Ended"; const d = Math.floor(diff / 86400000); const h = Math.floor((diff % 86400000) / 3600000); const m = Math.floor((diff % 3600000) / 60000); return `${d}d ${h}h ${m}m`; };
+    const formatHMS = (diff) => { if (diff < 0) return "00:00:00"; const h = Math.floor((diff % 86400000) / 3600000); const m = Math.floor((diff % 3600000) / 60000); const s = Math.floor((diff % 60000) / 1000); return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`; };
+
+    function initialize() {
+        setupTabs();
+        setupCustomSelect();
+        setupTodoList();
+        setupSparkleEffect();
+        setupHeartExplosion();
+        fetchAndRenderData();
+
+        if (countdownInterval) clearInterval(countdownInterval);
+        countdownInterval = setInterval(masterTimerTick, 1000);
+        masterTimerTick();
+    }
+
+    initialize();
+});

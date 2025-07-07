@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity Nikki Companion</title>
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Infinity Nikki Companion</h1>
+            <p class="subtitle">Your daily dose of Miraland magic</p>
+        </header>
+
+        <main>
+            <nav class="main-nav">
+                <button class="nav-button active" data-target="timers-content">⏱️ Timers</button>
+                <button class="nav-button" data-target="checklist-content">💖 Checklist</button>
+            </nav>
+
+            <div id="timers-content" class="tab-content active">
+                <div class="layout-column">
+                    <section class="server-info">
+                        <h2>Server Information</h2>
+                        <div class="custom-select-wrapper">
+                            <label>Your Server:</label>
+                            <div class="custom-select">
+                                <div class="select-trigger"><span>...</span><div class="arrow"></div></div>
+                                <div class="options">
+                                    <div class="option" data-value="America">🇺🇸 America (UTC-7)</div>
+                                    <div class="option" data-value="Europe">🇪🇺 Europe (UTC+1)</div>
+                                    <div class="option" data-value="Asia">🇯🇵 Asia (UTC+8)</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-box" id="server-time-container">
+                            <h3>Server Time</h3>
+                            <p class="countdown-flicker" id="server-time">--:--:--</p>
+                        </div>
+                        <div class="info-box" id="daily-reset-container">
+                            <h3>Daily Reset In</h3>
+                            <p class="countdown-flicker" data-countdown-target="daily-reset"></p>
+                        </div>
+                        <div class="info-box" id="weekly-reset-container">
+                            <h3>Weekly Reset In</h3>
+                            <p class="countdown-flicker" data-countdown-target="weekly-reset"></p>
+                        </div>
+                    </section>
+                    <section class="maintenance-info">
+                        <h2>Maintenance</h2>
+                        <div class="info-box" id="maintenance-countdown-container">
+                            <p>Fetching info...</p>
+                        </div>
+                    </section>
+                </div>
+                <div class="layout-column">
+                    <section class="events-info">
+                        <h2>Events</h2>
+                        <div id="event-accordions">
+                            <p>Loading events...</p>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <div id="checklist-content" class="tab-content">
+                <section class="todo-list">
+                    <h2>Daily Checklist</h2>
+                    <ul id="daily-tasks">
+                        </ul>
+                    <button id="reset-tasks">Reset Daily Tasks</button>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
