@@ -1,8 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Global State ---
     const serverOffsets = { America: -7, Europe: 1, Asia: 8 };
     let selectedServer = localStorage.getItem('selectedServer') || 'America';
     let countdownInterval;
 
+    // --- UI Setup Functions ---
     function setupTabs() {
         const navButtons = document.querySelectorAll('.nav-button');
         const tabContents = document.querySelectorAll('.tab-content');
@@ -67,37 +69,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const createChecklist = (type) => {
             const config = checklists[type];
             let savedState = JSON.parse(localStorage.getItem(config.storageKey)) || {};
-
             const render = () => {
                 config.element.innerHTML = '';
                 config.tasks.forEach((task) => {
                     const isCompleted = savedState[task.name] || false;
                     const li = document.createElement('li');
                     li.className = isCompleted ? 'completed' : '';
-                    li.innerHTML = `
-                        <div>
-                            <span class="heart-checkbox">${isCompleted ? '♥' : '♡'}</span>
-                            ${task.name}
-                            <div class="task-desc">${task.desc}</div>
-                        </div>
-                    `;
+                    li.innerHTML = `<div><span class="heart-checkbox">${isCompleted ? '♥' : '♡'}</span> ${task.name}<div class="task-desc">${task.desc}</div></div>`;
                     li.addEventListener('click', () => toggle(task.name));
                     config.element.appendChild(li);
                 });
             };
-
-            const toggle = (taskName) => {
-                savedState[taskName] = !savedState[taskName];
-                localStorage.setItem(config.storageKey, JSON.stringify(savedState));
-                render();
-            };
-
-            document.querySelector(`.reset-button[data-target="${type}"]`).addEventListener('click', () => {
-                savedState = {};
-                localStorage.setItem(config.storageKey, JSON.stringify(savedState));
-                render();
-            });
-
+            const toggle = (taskName) => { savedState[taskName] = !savedState[taskName]; localStorage.setItem(config.storageKey, JSON.stringify(savedState)); render(); };
+            document.querySelector(`.reset-button[data-target="${type}"]`).addEventListener('click', () => { savedState = {}; localStorage.setItem(config.storageKey, JSON.stringify(savedState)); render(); });
             render();
         };
 
@@ -143,23 +127,116 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Data Fetching and Rendering ---
     async function fetchAndRenderData() {
-        const maintenanceContainer=document.getElementById("maintenance-countdown-container");try{const e="Version/1.7",t=`https://infinity-nikki.fandom.com/api.php?action=query&prop=revisions&titles=${encodeURIComponent(e)}&rvprop=content&format=json&origin=*`,n=await fetch(t),a=await n.json(),s=a.query.pages[Object.keys(a.query.pages)[0]].revisions[0]["*"],i=s.match(/\|date_start\s*=\s*(\d{4})/),o=s.match(/==Maintenance==\s*\n===Season Begin===\s*\n(\w+\s\d+),\s(\d{2}:\d{2})\s+to\s+(\d{2}:\d{2})\s+\(UTC-7\)/);o&&i?maintenanceContainer.innerHTML=`<div class="event-title">${e}</div><div data-countdown-status data-start-time="${new Date(`${o[1]}, ${i[1]} ${o[2]}:00 UTC-07:00`).getTime()}" data-end-time="${new Date(`${o[1]}, ${i[1]} ${o[3]}:00 UTC-07:00`).getTime()}"></div><div class="countdown-flicker" data-countdown-target data-start-time="${new Date(`${o[1]}, ${i[1]} ${o[2]}:00 UTC-07:00`).getTime()}" data-end-time="${new Date(`${o[1]}, ${i[1]} ${o[3]}:00 UTC-07:00`).getTime()}"></div>`:maintenanceContainer.innerHTML="No upcoming maintenance found."}catch(e){console.error("Failed to fetch maintenance info:",e),maintenanceContainer.innerHTML="Could not load info."}try{const e=`https://infinity-nikki.fandom.com/api.php?action=parse&page=Event&format=json&origin=*`,t=await fetch(e),n=await t.json(),a=new DOMParser().parseFromString(n.parse.text["*"],"text/html"),s=new Date;let i=[];a.querySelectorAll("table.article-table tr").forEach(e=>{const t=e.querySelectorAll("td");if(t.length<2)return;const n=t[0].textContent.trim(),a=t[1].textContent.trim().split(/\s*(?:–|-)\s*/);if(a.length<2)return;const o=new Date(a[0].trim()+" UTC-07:00"),r=new Date(a[1].trim()+" UTC-07:00");r>s&&!isNaN(o.getTime())&&i.push({name:n,start:o,end:r})}),renderEvents(i)}catch(e){console.error("Failed to fetch events:",e),document.getElementById("event-accordions").innerHTML="<p>Could not load events.</p>"}
+        await fetchMaintenanceInfo();
+        await fetchAndDisplayEvents();
+    }
+
+    async function fetchMaintenanceInfo() {
+        const maintenanceContainer = document.getElementById('maintenance-countdown-container');
+        try {
+            const categoryApiUrl = `https://infinity-nikki.fandom.com/api.php?action=query&list=categorymembers&cmtitle=Category:Version_Info&cmlimit=50&format=json&origin=*`;
+            const categoryResponse = await fetch(categoryApiUrl);
+            const categoryData = await categoryResponse.json();
+            const versions = categoryData.query.categorymembers;
+            if (!versions || versions.length === 0) throw new Error("No version pages found.");
+
+            versions.sort((a, b) => parseFloat(b.title.split('/')[1]) - parseFloat(a.title.split('/')[1]));
+            const latestVersionPageTitle = versions[0].title;
+
+            const pageApiUrl = `https://infinity-nikki.fandom.com/api.php?action=query&prop=revisions&titles=${encodeURIComponent(latestVersionPageTitle)}&rvprop=content&format=json&origin=*`;
+            const pageResponse = await fetch(pageApiUrl);
+            const pageData = await pageResponse.json();
+            const pageContent = pageData.query.pages[Object.keys(pageData.query.pages)[0]].revisions[0]['*'];
+            
+            const releaseDateMatch = pageContent.match(/\|date_start\s*=\s*(.*?)\n/);
+            if (!releaseDateMatch) {
+                maintenanceContainer.innerHTML = 'No new version maintenance announced.';
+                return;
+            }
+
+            const releaseDate = new Date(releaseDateMatch[1].trim() + " UTC-07:00");
+            if (releaseDate > new Date()) {
+                const maintenanceMatch = pageContent.match(/==Maintenance==\s*\n===Season Begin===\s*\n(\w+\s\d+),\s(\d{2}:\d{2})\s+to\s+(\d{2}:\d{2})\s+\(UTC-7\)/);
+                const year = releaseDate.getUTCFullYear();
+                if (maintenanceMatch) {
+                    const [_, dateStr, startTimeStr, endTimeStr] = maintenanceMatch;
+                    const startTime = new Date(`${dateStr}, ${year} ${startTimeStr}:00 UTC-07:00`);
+                    const endTime = new Date(`${dateStr}, ${year} ${endTimeStr}:00 UTC-07:00`);
+                    maintenanceContainer.innerHTML = `<div class="event-title">${latestVersionPageTitle}</div><div data-countdown-status data-start-time="${startTime.getTime()}" data-end-time="${endTime.getTime()}"></div><div class="countdown-flicker" data-countdown-target data-start-time="${startTime.getTime()}" data-end-time="${endTime.getTime()}"></div>`;
+                } else {
+                    maintenanceContainer.innerHTML = 'New version found, but maintenance time is not listed yet.';
+                }
+            } else {
+                maintenanceContainer.innerHTML = 'No new version maintenance announced.';
+            }
+
+        } catch (error) {
+            console.error("Failed to fetch maintenance info:", error);
+            maintenanceContainer.innerHTML = 'Could not load maintenance info.';
+        }
+    }
+    
+    async function fetchAndDisplayEvents() {
+        try {
+            const apiUrl = `https://infinity-nikki.fandom.com/api.php?action=parse&page=Event&format=json&origin=*`;
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            const doc = new DOMParser().parseFromString(data.parse.text['*'], 'text/html');
+            const now = new Date();
+            let parsedEvents = [];
+
+            doc.querySelectorAll('table.article-table tr').forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length < 2) return;
+
+                const links = cells[0].querySelectorAll('a');
+                const titleLink = links.length > 0 ? links[links.length - 1] : null;
+                const name = titleLink ? titleLink.title : cells[0].textContent.trim();
+                const description = cells.length > 2 ? cells[2].textContent.trim() : "";
+                
+                const durationCell = cells[1].textContent.trim();
+                const dates = durationCell.split(/\s*(?:–|-)\s*/);
+                if (dates.length < 2) return;
+                
+                const startDate = new Date(dates[0].trim() + " UTC-07:00");
+                const endDate = new Date(dates[1].trim() + " UTC-07:00");
+
+                if (endDate > now && !isNaN(startDate.getTime())) {
+                    parsedEvents.push({ name, description, start: startDate, end: endDate });
+                }
+            });
+            renderEvents(parsedEvents);
+        } catch (error) {
+            console.error("Failed to fetch events:", error);
+            document.getElementById('event-accordions').innerHTML = "<p>Could not load events.</p>";
+        }
     }
     
     function renderEvents(events) {
         const accordionsContainer = document.getElementById('event-accordions');
         accordionsContainer.innerHTML = '';
         const now = new Date();
-        const ongoing = events.filter(e => e.start <= now).sort((a,b) => a.end - b.end);
-        const upcoming = events.filter(e => e.start > now).sort((a,b) => a.start - b.start);
+        const ongoing = events.filter(e => e.start <= now).sort((a, b) => a.end - b.end);
+        const upcoming = events.filter(e => e.start > now).sort((a, b) => a.start - b.start);
+
         const createAccordion = (title, eventList, expanded = false) => {
             if (eventList.length === 0) return '';
-            const eventsHtml = eventList.map(event => `<div class="event"><div class="event-title">${event.name}</div><div data-countdown-status data-start-time="${event.start.getTime()}" data-end-time="${event.end.getTime()}"></div><div class="event-countdown countdown-flicker" data-countdown-target data-start-time="${event.start.getTime()}" data-end-time="${event.end.getTime()}"></div></div>`).join('');
+            const eventsHtml = eventList.map(event => `
+                <div class="event">
+                    <div class="event-title">${event.name}</div>
+                    <div class="event-description">${event.description}</div>
+                    <div data-countdown-status data-start-time="${event.start.getTime()}" data-end-time="${event.end.getTime()}"></div>
+                    <div class="event-countdown countdown-flicker" data-countdown-target data-start-time="${event.start.getTime()}" data-end-time="${event.end.getTime()}"></div>
+                </div>
+            `).join('');
             return `<div class="accordion-group"><div class="accordion ${expanded ? 'active' : ''}"><div class="header">${title} (${eventList.length})</div><div class="content" style="max-height: ${expanded ? '1000px' : '0'}">${eventsHtml}</div></div></div>`;
         };
+
         accordionsContainer.innerHTML = createAccordion('Ongoing Events', ongoing, true) + createAccordion('Upcoming Events', upcoming);
         if (accordionsContainer.innerHTML === '') accordionsContainer.innerHTML = '<p>No upcoming or active events.</p>';
+        
         document.querySelectorAll('.accordion .header').forEach(header => {
             header.addEventListener('click', () => {
                 const accordion = header.parentElement;
@@ -170,6 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- The Main Timer Loop ---
     function masterTimerTick() {
         const now = new Date();
         const serverTime = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours() + serverOffsets[selectedServer], now.getUTCMinutes(), now.getUTCSeconds());
@@ -182,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let weeklyReset = new Date(serverTime);
         const dayOfWeek = weeklyReset.getUTCDay();
-        const daysUntilMonday = (dayOfWeek === 1 && serverTime < weeklyReset) ? 0 : (1 - dayOfWeek + 7) % 7;
+        const daysUntilMonday = (dayOfWeek === 1 && serverTime.getUTCHours() < 4) ? 0 : (1 - dayOfWeek + 7) % 7;
         weeklyReset.setUTCDate(weeklyReset.getUTCDate() + daysUntilMonday);
         weeklyReset.setUTCHours(4, 0, 0, 0);
         if (serverTime >= weeklyReset) weeklyReset.setUTCDate(weeklyReset.getUTCDate() + 7);
@@ -201,6 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const formatDHM = (diff) => { if (diff < 0) return "Ended"; const d = Math.floor(diff / 86400000); const h = Math.floor((diff % 86400000) / 3600000); const m = Math.floor((diff % 3600000) / 60000); return `${d}d ${h}h ${m}m`; };
     const formatHMS = (diff) => { if (diff < 0) return "00:00:00"; const h = Math.floor((diff % 86400000) / 3600000); const m = Math.floor((diff % 3600000) / 60000); const s = Math.floor((diff % 60000) / 1000); return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`; };
 
+    // --- Initialization ---
     function initialize() {
         setupTabs();
         setupCustomSelect();
