@@ -1,69 +1,66 @@
 /* Local Font Definitions */
-/* Poppins */
 @font-face {
-    font-family: 'Poppins';
-    font-style: normal;
-    font-weight: 300;
-    font-display: swap;
-    src: url('./fonts/Poppins-Light.woff2') format('woff2');
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('./fonts/Poppins-Light.woff2') format('woff2');
 }
 @font-face {
-    font-family: 'Poppins';
-    font-style: normal;
-    font-weight: 400;
-    font-display: swap;
-    src: url('./fonts/Poppins-Regular.woff2') format('woff2');
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/Poppins-Regular.woff2') format('woff2');
 }
 @font-face {
-    font-family: 'Poppins';
-    font-style: normal;
-    font-weight: 600;
-    font-display: swap;
-    src: url('./fonts/Poppins-SemiBold.woff2') format('woff2');
-}
-
-/* Crimson Text */
-@font-face {
-    font-family: 'Crimson Text';
-    font-style: italic;
-    font-weight: 400;
-    font-display: swap;
-    src: url('./fonts/CrimsonText-Italic.woff2') format('woff2');
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/Poppins-SemiBold.woff2') format('woff2');
 }
 @font-face {
-    font-family: 'Crimson Text';
-    font-style: italic;
-    font-weight: 600;
-    font-display: swap;
-    src: url('./fonts/CrimsonText-SemiBoldItalic.woff2') format('woff2');
+  font-family: 'Crimson Text';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/CrimsonText-Italic.woff2') format('woff2');
 }
 @font-face {
-    font-family: 'Crimson Text';
-    font-style: italic;
-    font-weight: 700;
-    font-display: swap;
-    src: url('./fonts/CrimsonText-BoldItalic.woff2') format('woff2');
+  font-family: 'Crimson Text';
+  font-style: italic;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/CrimsonText-SemiBoldItalic.woff2') format('woff2');
 }
 @font-face {
-    font-family: 'Crimson Text';
-    font-style: normal;
-    font-weight: 400;
-    font-display: swap;
-    src: url('./fonts/CrimsonText-Regular.woff2') format('woff2');
+  font-family: 'Crimson Text';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/CrimsonText-BoldItalic.woff2') format('woff2');
 }
 @font-face {
-    font-family: 'Crimson Text';
-    font-style: normal;
-    font-weight: 600;
-    font-display: swap;
-    src: url('./fonts/CrimsonText-Semibold.woff2') format('woff2');
+  font-family: 'Crimson Text';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/CrimsonText-Regular.woff2') format('woff2');
 }
 @font-face {
-    font-family: 'Crimson Text';
-    font-style: normal;
-    font-weight: 700;
-    font-display: swap;
-    src: url('./fonts/CrimsonText-Bold.woff2') format('woff2');
+  font-family: 'Crimson Text';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/CrimsonText-Semibold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Crimson Text';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/CrimsonText-Bold.woff2') format('woff2');
 }
 
 :root {
@@ -144,13 +141,14 @@ h3 { color: var(--text-light); margin-top: 0; font-size: 1em; font-weight: 400; 
 .event-countdown { font-size: 1.3em; font-weight: 600; color: var(--primary-pink); }
 
 /* --- To-Do List with Heart Checkboxes --- */
-#daily-tasks { list-style: none; padding: 0; }
-#daily-tasks li { background-color: var(--bg-info-box); margin-bottom: 0.5em; padding: 1em; border-radius: 8px; display: flex; align-items: center; cursor: pointer; transition: all 0.2s ease; }
-#daily-tasks li.completed { background-color: #e8f5e9; text-decoration: line-through; color: var(--text-light); }
-#daily-tasks .heart-checkbox { font-size: 1.5em; line-height: 1; margin-right: 0.75em; color: var(--light-pink); transition: color 0.2s ease, transform 0.2s ease; }
-#daily-tasks li.completed .heart-checkbox { color: var(--primary-pink); transform: scale(1.1); }
-#reset-tasks { background-color: var(--primary-pink); color: white; border: none; padding: 0.8em 1.5em; border-radius: 8px; cursor: pointer; display: block; margin: 1em auto 0; transition: background-color 0.3s; font-weight: 600; }
-#reset-tasks:hover { background-color: #FF1493; }
+.todo-list ul { list-style: none; padding: 0; }
+.todo-list li { background-color: var(--bg-info-box); margin-bottom: 0.5em; padding: 1em; border-radius: 8px; display: flex; align-items: center; cursor: pointer; transition: all 0.2s ease; }
+.todo-list li.completed { background-color: #e8f5e9; text-decoration: line-through; color: var(--text-light); }
+.todo-list .heart-checkbox { font-size: 1.5em; line-height: 1; margin-right: 0.75em; color: var(--light-pink); transition: color 0.2s ease, transform 0.2s ease; }
+.todo-list li.completed .heart-checkbox { color: var(--primary-pink); transform: scale(1.1); }
+.reset-button { background-color: var(--primary-pink); color: white; border: none; padding: 0.8em 1.5em; border-radius: 8px; cursor: pointer; display: block; margin: 1em auto 0; transition: background-color 0.3s; font-weight: 600; }
+.reset-button:hover { background-color: #FF1493; }
+.todo-list li .task-desc { font-size: 0.8em; color: var(--text-light); margin-left: 2.25em; margin-top: -0.5em; }
 
 /* --- Special Effects --- */
 .sparkle, .heart-particle { position: fixed; z-index: 9999; pointer-events: none; animation-duration: 0.8s; animation-fill-mode: forwards; animation-timing-function: ease-out; }
@@ -163,10 +161,10 @@ h3 { color: var(--text-light); margin-top: 0; font-size: 1em; font-weight: 400; 
 @media (min-width: 992px) {
     .container { max-width: 1200px; }
     #timers-content.active {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2em;
-    align-items: start;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2em;
+        align-items: start;
     }
     .layout-column > section {
         margin-top: 0;
