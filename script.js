@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tasks: [
                     { name: "Spend all Vital Energy", desc: "Prevents overflow and waste." },
                     { name: "Complete Daily Wishes", desc: "For premium currency and resources." },
-                    { name: "Check Store for free items", desc: "The daily free pack is essential!" },
+                    { name: "Check Store for free items", desc: "Free stuff is essential!" },
                     { name: "Claim Pear-Pal Dig rewards", desc: "Easy passive resources." },
                     { name: "Complete event tasks", desc: "Don't miss limited-time rewards." },
                     { name: "Check in-game mail", desc: "For gifts & compensation." },
