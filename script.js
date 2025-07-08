@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedServer = localStorage.getItem('selectedServer') || 'America';
     let countdownInterval;
 
-    // --- Tab & UI Setup ---
+    // --- UI Setup Functions (setupTabs, setupCustomSelect, etc. are unchanged) ---
     function setupTabs() {
         const navButtons = document.querySelectorAll('.nav-button');
         const tabContents = document.querySelectorAll('.tab-content');
@@ -40,15 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setupTodoList() {
-        // Updated daily tasks based on community feedback
-        const dailyTasks = [
-            "Complete Daily Wishes",
-            "Spend all Vital Energy",
-            "Claim Pear-Pal Dig rewards",
-            "Check Store for free daily/weekly items",
-            "Complete limited-time event tasks",
-            "Check in-game mail and announcements"
-        ];
+        const dailyTasks = ["Complete Daily Wishes", "Spend all Vital Energy", "Claim Pear-Pal Dig rewards", "Check Store for free daily/weekly items", "Complete limited-time event tasks", "Check in-game mail and announcements"];
         const taskListEl = document.getElementById('daily-tasks');
         const resetBtn = document.getElementById('reset-tasks');
         let savedTasks = JSON.parse(localStorage.getItem('dailyTasks')) || {};
@@ -67,23 +59,19 @@ document.addEventListener('DOMContentLoaded', () => {
         resetBtn.addEventListener('click', () => { savedTasks = {}; localStorage.setItem('dailyTasks', JSON.stringify(savedTasks)); renderTasks(); });
         renderTasks();
     }
-
+    
     function setupSparkleEffect() {
         let isThrottled = false;
         document.body.addEventListener('mousemove', (e) => {
             if (isThrottled) return;
             isThrottled = true;
             setTimeout(() => { isThrottled = false; }, 30);
-
             const sparkle = document.createElement('div');
             sparkle.classList.add('sparkle');
-
             sparkle.style.left = `${e.clientX}px`;
             sparkle.style.top = `${e.clientY}px`;
-
             sparkle.style.backgroundColor = ['#ff69b4', '#ff85c8', '#ffb6c1'][Math.floor(Math.random() * 3)];
             sparkle.style.transform = `scale(${Math.random() * 0.7 + 0.3})`;
-
             document.body.appendChild(sparkle);
             sparkle.addEventListener('animationend', () => sparkle.remove());
         });
@@ -91,36 +79,82 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setupHeartExplosion() {
         document.addEventListener('click', (e) => {
-            // Don't trigger explosion on interactive elements
-            if (e.target.closest('button, .custom-select, a, li')) {
-                return;
-            }
+            if (e.target.closest('button, .custom-select, a, li')) return;
             for (let i = 0; i < 10; i++) {
                 const heart = document.createElement('div');
                 heart.classList.add('heart-particle');
                 heart.innerHTML = '💖';
-
                 heart.style.left = `${e.clientX}px`;
                 heart.style.top = `${e.clientY}px`;
-
                 const angle = Math.random() * 2 * Math.PI;
                 const distance = Math.random() * 40 + 40;
                 const x = Math.cos(angle) * distance;
                 const y = Math.sin(angle) * distance;
-
                 heart.style.setProperty('--tx', `${x}px`);
                 heart.style.setProperty('--ty', `${y}px`);
-
                 document.body.appendChild(heart);
                 heart.addEventListener('animationend', () => heart.remove());
             }
         });
     }
 
+    // --- Data Fetching and Rendering ---
     async function fetchAndRenderData() {
-        const maintenanceContainer=document.getElementById("maintenance-countdown-container");try{const e="Version/1.7",t=`https://infinity-nikki.fandom.com/api.php?action=query&prop=revisions&titles=${encodeURIComponent(e)}&rvprop=content&format=json&origin=*`,n=await fetch(t),a=await n.json(),s=a.query.pages[Object.keys(a.query.pages)[0]].revisions[0]["*"],i=s.match(/\|date_start\s*=\s*(\d{4})/),o=s.match(/==Maintenance==\s*\n===Season Begin===\s*\n(\w+\s\d+),\s(\d{2}:\d{2})\s+to\s+(\d{2}:\d{2})\s+\(UTC-7\)/);o&&i?maintenanceContainer.innerHTML=`<div class="event-title">${e}</div><div data-countdown-status data-start-time="${new Date(`${o[1]}, ${i[1]} ${o[2]}:00 UTC-07:00`).getTime()}" data-end-time="${new Date(`${o[1]}, ${i[1]} ${o[3]}:00 UTC-07:00`).getTime()}"></div><div class="countdown-flicker" data-countdown-target data-start-time="${new Date(`${o[1]}, ${i[1]} ${o[2]}:00 UTC-07:00`).getTime()}" data-end-time="${new Date(`${o[1]}, ${i[1]} ${o[3]}:00 UTC-07:00`).getTime()}"></div>`:maintenanceContainer.innerHTML="No upcoming maintenance found."}catch(e){console.error("Failed to fetch maintenance info:",e),maintenanceContainer.innerHTML="Could not load info."}try{const e=`https://infinity-nikki.fandom.com/api.php?action=parse&page=Event&format=json&origin=*`,t=await fetch(e),n=await t.json(),a=new DOMParser().parseFromString(n.parse.text["*"],"text/html"),s=new Date;let i=[];a.querySelectorAll("table.article-table tr").forEach(e=>{const t=e.querySelectorAll("td");if(t.length<2)return;const n=t[0].textContent.trim(),a=t[1].textContent.trim().split(/\s*(?:–|-)\s*/);if(a.length<2)return;const o=new Date(a[0].trim()+" UTC-07:00"),r=new Date(a[1].trim()+" UTC-07:00");r>s&&!isNaN(o.getTime())&&i.push({name:n,start:o,end:r})}),renderEvents(i)}catch(e){console.error("Failed to fetch events:",e),document.getElementById("event-accordions").innerHTML="<p>Could not load events.</p>"}
+        await fetchMaintenanceInfo(); // This now handles itself
+        await fetchAndDisplayEvents();
     }
 
+    async function fetchMaintenanceInfo() {
+        const maintenanceContainer = document.getElementById('maintenance-countdown-container');
+        try {
+            // Step 1: Get all version pages from the category
+            const categoryApiUrl = `https://infinity-nikki.fandom.com/api.php?action=query&list=categorymembers&cmtitle=Category:Version_Info&cmlimit=50&format=json&origin=*`;
+            const categoryResponse = await fetch(categoryApiUrl);
+            const categoryData = await categoryResponse.json();
+            const versions = categoryData.query.categorymembers;
+            if (!versions || versions.length === 0) throw new Error("No version pages found.");
+
+            // Step 2: Sort to find the highest (latest) version number
+            versions.sort((a, b) => parseFloat(b.title.split('/')[1]) - parseFloat(a.title.split('/')[1]));
+            const latestVersionPageTitle = versions[0].title;
+
+            // Step 3: Fetch the content of that latest page
+            const pageApiUrl = `https://infinity-nikki.fandom.com/api.php?action=query&prop=revisions&titles=${encodeURIComponent(latestVersionPageTitle)}&rvprop=content&format=json&origin=*`;
+            const pageResponse = await fetch(pageApiUrl);
+            const pageData = await pageResponse.json();
+            const pageContent = pageData.query.pages[Object.keys(pageData.query.pages)[0]].revisions[0]['*'];
+            
+            // Step 4: Check if its release date is in the future
+            const releaseDateMatch = pageContent.match(/\|date_start\s*=\s*(.*?)\n/);
+            if (!releaseDateMatch) throw new Error("Could not find a release date for the latest version.");
+
+            const releaseDate = new Date(releaseDateMatch[1].trim() + " UTC-07:00");
+            if (releaseDate > new Date()) {
+                // It's an upcoming version, so look for maintenance info
+                const maintenanceMatch = pageContent.match(/==Maintenance==\s*\n===Season Begin===\s*\n(\w+\s\d+),\s(\d{2}:\d{2})\s+to\s+(\d{2}:\d{2})\s+\(UTC-7\)/);
+                const year = releaseDate.getUTCFullYear();
+                if (maintenanceMatch) {
+                    const [_, dateStr, startTimeStr, endTimeStr] = maintenanceMatch;
+                    const startTime = new Date(`${dateStr}, ${year} ${startTimeStr}:00 UTC-07:00`);
+                    const endTime = new Date(`${dateStr}, ${year} ${endTimeStr}:00 UTC-07:00`);
+                    maintenanceContainer.innerHTML = `<div class="event-title">${latestVersionPageTitle}</div><div data-countdown-status data-start-time="${startTime.getTime()}" data-end-time="${endTime.getTime()}"></div><div class="countdown-flicker" data-countdown-target data-start-time="${startTime.getTime()}" data-end-time="${endTime.getTime()}"></div>`;
+                } else {
+                    maintenanceContainer.innerHTML = 'New version found, but maintenance time is not listed yet.';
+                }
+            } else {
+                maintenanceContainer.innerHTML = 'No new version maintenance announced.';
+            }
+
+        } catch (error) {
+            console.error("Failed to fetch maintenance info:", error);
+            maintenanceContainer.innerHTML = 'Could not load maintenance info.';
+        }
+    }
+    
+    async function fetchAndDisplayEvents() {
+        try{const e=`https://infinity-nikki.fandom.com/api.php?action=parse&page=Event&format=json&origin=*`,t=await fetch(e),n=await t.json(),a=new DOMParser().parseFromString(n.parse.text["*"],"text/html"),s=new Date;let i=[];a.querySelectorAll("table.article-table tr").forEach(e=>{const t=e.querySelectorAll("td");if(t.length<2)return;const n=t[0].textContent.trim(),a=t[1].textContent.trim().split(/\s*(?:–|-)\s*/);if(a.length<2)return;const o=new Date(a[0].trim()+" UTC-07:00"),r=new Date(a[1].trim()+" UTC-07:00");r>s&&!isNaN(o.getTime())&&i.push({name:n,start:o,end:r})}),renderEvents(i)}catch(e){console.error("Failed to fetch events:",e),document.getElementById("event-accordions").innerHTML="<p>Could not load events.</p>"}
+    }
+    
     function renderEvents(events) {
         const accordionsContainer = document.getElementById('event-accordions');
         accordionsContainer.innerHTML = '';
@@ -144,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- The Main Timer Loop ---
     function masterTimerTick() {
         const now = new Date();
         const serverTime = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours() + serverOffsets[selectedServer], now.getUTCMinutes(), now.getUTCSeconds());
@@ -156,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let weeklyReset = new Date(serverTime);
         const dayOfWeek = weeklyReset.getUTCDay();
-        const daysUntilMonday = (1 - dayOfWeek + 7) % 7;
+        const daysUntilMonday = (dayOfWeek === 1 && serverTime < weeklyReset) ? 0 : (1 - dayOfWeek + 7) % 7;
         weeklyReset.setUTCDate(weeklyReset.getUTCDate() + daysUntilMonday);
         weeklyReset.setUTCHours(4, 0, 0, 0);
         if (serverTime >= weeklyReset) weeklyReset.setUTCDate(weeklyReset.getUTCDate() + 7);
@@ -175,6 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const formatDHM = (diff) => { if (diff < 0) return "Ended"; const d = Math.floor(diff / 86400000); const h = Math.floor((diff % 86400000) / 3600000); const m = Math.floor((diff % 3600000) / 60000); return `${d}d ${h}h ${m}m`; };
     const formatHMS = (diff) => { if (diff < 0) return "00:00:00"; const h = Math.floor((diff % 86400000) / 3600000); const m = Math.floor((diff % 3600000) / 60000); const s = Math.floor((diff % 60000) / 1000); return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`; };
 
+    // --- Initialization ---
     function initialize() {
         setupTabs();
         setupCustomSelect();
@@ -182,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setupSparkleEffect();
         setupHeartExplosion();
         fetchAndRenderData();
-
+        
         if (countdownInterval) clearInterval(countdownInterval);
         countdownInterval = setInterval(masterTimerTick, 1000);
         masterTimerTick();
