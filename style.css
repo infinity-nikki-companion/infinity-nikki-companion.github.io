@@ -103,4 +103,85 @@ header { text-align: center; margin-bottom: 1em; }
 header h1 { font-family: var(--font-title); font-size: 2.5em; font-style: italic; color: var(--primary-pink); }
 header .subtitle { font-size: 1em; color: var(--text-light); margin-top: -1em; }
 
-h2 { font-family: var(--font-title); font-size: 1.8em; color: var(--light-pink); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5em; margin
+h2 { font-family: var(--font-title); font-size: 1.8em; color: var(--light-pink); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5em; margin-top: 1.5em; }
+h3 { color: var(--text-light); margin-top: 0; font-size: 1em; font-weight: 400; text-align: center; }
+
+/* --- Tab Navigation --- */
+.main-nav { display: flex; gap: 0.5em; border-bottom: 1px solid var(--border-color); margin-bottom: 2em; }
+.nav-button { flex-grow: 1; padding: 0.8em; font-size: 1em; font-weight: 600; border: none; background: transparent; border-radius: 8px 8px 0 0; cursor: pointer; color: var(--text-light); transition: all 0.3s ease; }
+.nav-button.active { background-color: var(--bg-info-box); color: var(--primary-pink); border: 1px solid var(--border-color); border-bottom: 1px solid var(--bg-info-box); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.info-box { background-color: var(--bg-info-box); padding: 1em; border-radius: 12px; margin-top: 1em; border: 1px solid var(--border-color); }
+.countdown-flicker { font-size: 1.7em; font-weight: 600; color: var(--primary-pink); text-align: center; }
+
+/* --- Custom Server Selector --- */
+.custom-select-wrapper { margin: 1.5em 0 1em; }
+.custom-select-wrapper label { display: block; margin-bottom: 0.5em; font-weight: 600; color: var(--text-light); }
+.custom-select { position: relative; cursor: pointer; }
+.select-trigger { display: flex; justify-content: space-between; align-items: center; padding: 0.8em 1em; border: 1px solid var(--border-color); border-radius: 8px; background: white; }
+.arrow { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--text-dark); transition: transform 0.3s ease; }
+.custom-select.open .arrow { transform: rotate(180deg); }
+.options { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border-color); border-radius: 8px; margin-top: 0.5em; z-index: 10; display: none; overflow: hidden; box-shadow: 0 4px 16px var(--shadow-color); }
+.custom-select.open .options { display: block; }
+.option { padding: 0.8em 1em; }
+.option:hover { background-color: var(--bg-info-box); }
+
+/* --- Event Accordion --- */
+.accordion-group .accordion { background-color: var(--bg-info-box); border-radius: 12px; margin-bottom: 1em; border: 1px solid var(--border-color); }
+.accordion .header { padding: 1em; cursor: pointer; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+.accordion .header::after { content: '+'; font-size: 1.5em; color: var(--light-pink); transition: transform 0.3s ease; }
+.accordion.active .header::after { transform: rotate(45deg); }
+
+/* NEW: Modern Accordion Animation */
+.accordion .content {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.4s ease-out;
+}
+.accordion.active .content {
+    grid-template-rows: 1fr;
+}
+.accordion .content-inner {
+    overflow: hidden;
+    padding: 0 1em;
+}
+
+.event { text-align: center; padding-bottom: 1em; border-bottom: 1px solid var(--border-color); margin-bottom: 1em; }
+.event:last-child { border-bottom: none; }
+.event-title { font-weight: 600; }
+.event-description { font-size: 0.85em; font-style: italic; color: var(--text-light); margin: 0.25em auto 0.75em auto; max-width: 95%; }
+.event-status { font-size: 0.8em; color: var(--text-light); }
+.event-countdown { font-size: 1.3em; font-weight: 600; color: var(--primary-pink); }
+
+/* --- To-Do List with Heart Checkboxes --- */
+.todo-list ul { list-style: none; padding: 0; }
+.todo-list li { background-color: var(--bg-info-box); margin-bottom: 0.5em; padding: 1em; border-radius: 8px; display: flex; align-items: center; cursor: pointer; transition: all 0.2s ease; }
+.todo-list li.completed { background-color: #e8f5e9; text-decoration: line-through; color: var(--text-light); }
+.todo-list .heart-checkbox { font-size: 1.5em; line-height: 1; margin-right: 0.75em; color: var(--light-pink); transition: color 0.2s ease, transform 0.2s ease; }
+.todo-list li.completed .heart-checkbox { color: var(--primary-pink); transform: scale(1.1); }
+.reset-button { background-color: var(--primary-pink); color: white; border: none; padding: 0.8em 1.5em; border-radius: 8px; cursor: pointer; display: block; margin: 1em auto 0; transition: background-color 0.3s; font-weight: 600; }
+.reset-button:hover { background-color: #FF1493; }
+.todo-list li .task-desc { font-size: 0.8em; color: var(--text-light); margin-left: 2.25em; margin-top: -0.5em; }
+
+/* --- Special Effects --- */
+.sparkle, .heart-particle { position: fixed; z-index: 9999; pointer-events: none; animation-duration: 0.8s; animation-fill-mode: forwards; animation-timing-function: ease-out; }
+.sparkle { width: 10px; height: 10px; background-color: var(--primary-pink); border-radius: 50%; animation-name: sparkle-trail; }
+.heart-particle { font-size: 1.5rem; animation-name: heart-explosion; }
+@keyframes sparkle-trail { to { transform: scale(0) translateY(-20px); opacity: 0; } }
+@keyframes heart-explosion { from { transform: translate(0, 0) scale(1); opacity: 1; } to { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; } }
+
+/* --- DESKTOP LAYOUT --- */
+@media (min-width: 992px) {
+    .container { max-width: 1200px; }
+    #timers-content.active {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2em;
+        align-items: start;
+    }
+    .layout-column > section {
+        margin-top: 0;
+    }
+}
