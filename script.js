@@ -205,11 +205,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (accordionsContainer.innerHTML === '') accordionsContainer.innerHTML = '<p>No upcoming or active events.</p>';
         
         // --- BUG FIX STARTS HERE ---
-        // After rendering, find any accordions that should be open by default
-        // and set their max-height to their actual scrollHeight.
-        document.querySelectorAll('.accordion.active .content').forEach(content => {
-            content.style.maxHeight = content.scrollHeight + "px";
-        });
+        // Use a setTimeout to allow the browser time to render the new HTML
+        // before we measure its height for the accordion animation.
+        setTimeout(() => {
+            document.querySelectorAll('.accordion.active .content').forEach(content => {
+                content.style.maxHeight = content.scrollHeight + "px";
+            });
+        }, 0);
         // --- BUG FIX ENDS HERE ---
 
         document.querySelectorAll('.accordion .header').forEach(header => {
