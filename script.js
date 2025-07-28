@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Global State ---
     const serverOffsets = { America: -7, Europe: 1, Asia: 8 };
     let selectedServer = localStorage.getItem('selectedServer') || 'America';
     let countdownInterval;
@@ -141,21 +140,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const categoryData = await categoryResponse.json();
             const versions = categoryData.query.categorymembers;
             if (!versions || versions.length === 0) throw new Error("No version pages found.");
-
             versions.sort((a, b) => parseFloat(b.title.split('/')[1]) - parseFloat(a.title.split('/')[1]));
             const latestVersionPageTitle = versions[0].title;
-
             const pageApiUrl = `https://infinity-nikki.fandom.com/api.php?action=query&prop=revisions&titles=${encodeURIComponent(latestVersionPageTitle)}&rvprop=content&format=json&origin=*`;
             const pageResponse = await fetch(pageApiUrl);
             const pageData = await pageResponse.json();
             const pageContent = pageData.query.pages[Object.keys(pageData.query.pages)[0]].revisions[0]['*'];
-            
             const releaseDateMatch = pageContent.match(/\|date_start\s*=\s*(.*?)\n/);
-            if (!releaseDateMatch) {
-                maintenanceContainer.innerHTML = 'No new version maintenance announced.';
-                return;
-            }
-
+            if (!releaseDateMatch) { maintenanceContainer.innerHTML = 'No new version maintenance announced.'; return; }
             const releaseDate = new Date(releaseDateMatch[1].trim() + " UTC-07:00");
             if (releaseDate > new Date()) {
                 const maintenanceMatch = pageContent.match(/==Maintenance==\s*\n===Season Begin===\s*\n(\w+\s\d+),\s(\d{2}:\d{2})\s+to\s+(\d{2}:\d{2})\s+\(UTC-7\)/);
@@ -165,17 +157,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const startTime = new Date(`${dateStr}, ${year} ${startTimeStr}:00 UTC-07:00`);
                     const endTime = new Date(`${dateStr}, ${year} ${endTimeStr}:00 UTC-07:00`);
                     maintenanceContainer.innerHTML = `<div class="event-title">${latestVersionPageTitle}</div><div data-countdown-status data-start-time="${startTime.getTime()}" data-end-time="${endTime.getTime()}"></div><div class="countdown-flicker" data-countdown-target data-start-time="${startTime.getTime()}" data-end-time="${endTime.getTime()}"></div>`;
-                } else {
-                    maintenanceContainer.innerHTML = 'New version found, but maintenance time is not listed yet.';
-                }
-            } else {
-                maintenanceContainer.innerHTML = 'No new version maintenance announced.';
-            }
-
-        } catch (error) {
-            console.error("Failed to fetch maintenance info:", error);
-            maintenanceContainer.innerHTML = 'Could not load maintenance info.';
-        }
+                } else { maintenanceContainer.innerHTML = 'New version found, but maintenance time is not listed yet.'; }
+            } else { maintenanceContainer.innerHTML = 'No new version maintenance announced.'; }
+        } catch (error) { console.error("Failed to fetch maintenance info:", error); maintenanceContainer.innerHTML = 'Could not load maintenance info.'; }
     }
     
     async function fetchAndDisplayEvents() {
@@ -186,32 +170,24 @@ document.addEventListener('DOMContentLoaded', () => {
             const doc = new DOMParser().parseFromString(data.parse.text['*'], 'text/html');
             const now = new Date();
             let parsedEvents = [];
-
             doc.querySelectorAll('table.article-table tr').forEach(row => {
                 const cells = row.querySelectorAll('td');
                 if (cells.length < 2) return;
-
                 const links = cells[0].querySelectorAll('a');
                 const titleLink = links.length > 0 ? links[links.length - 1] : null;
                 const name = titleLink ? titleLink.title : cells[0].textContent.trim();
                 const description = cells.length > 2 ? cells[2].textContent.trim() : "";
-                
                 const durationCell = cells[1].textContent.trim();
                 const dates = durationCell.split(/\s*(?:–|-)\s*/);
                 if (dates.length < 2) return;
-                
                 const startDate = new Date(dates[0].trim() + " UTC-07:00");
                 const endDate = new Date(dates[1].trim() + " UTC-07:00");
-
                 if (endDate > now && !isNaN(startDate.getTime())) {
                     parsedEvents.push({ name, description, start: startDate, end: endDate });
                 }
             });
             renderEvents(parsedEvents);
-        } catch (error) {
-            console.error("Failed to fetch events:", error);
-            document.getElementById('event-accordions').innerHTML = "<p>Could not load events.</p>";
-        }
+        } catch (error) { console.error("Failed to fetch events:", error); document.getElementById('event-accordions').innerHTML = "<p>Could not load events.</p>"; }
     }
     
     function renderEvents(events) {
@@ -220,23 +196,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const now = new Date();
         const ongoing = events.filter(e => e.start <= now).sort((a, b) => a.end - b.end);
         const upcoming = events.filter(e => e.start > now).sort((a, b) => a.start - b.start);
-
         const createAccordion = (title, eventList, expanded = false) => {
             if (eventList.length === 0) return '';
-            const eventsHtml = eventList.map(event => `
-                <div class="event">
-                    <div class="event-title">${event.name}</div>
-                    <div class="event-description">${event.description}</div>
-                    <div data-countdown-status data-start-time="${event.start.getTime()}" data-end-time="${event.end.getTime()}"></div>
-                    <div class="event-countdown countdown-flicker" data-countdown-target data-start-time="${event.start.getTime()}" data-end-time="${event.end.getTime()}"></div>
-                </div>
-            `).join('');
-            return `<div class="accordion-group"><div class="accordion ${expanded ? 'active' : ''}"><div class="header">${title} (${eventList.length})</div><div class="content" style="max-height: ${expanded ? '1000px' : '0'}">${eventsHtml}</div></div></div>`;
+            const eventsHtml = eventList.map(event => `<div class="event"><div class="event-title">${event.name}</div><div class="event-description">${event.description}</div><div data-countdown-status data-start-time="${event.start.getTime()}" data-end-time="${event.end.getTime()}"></div><div class="event-countdown countdown-flicker" data-countdown-target data-start-time="${event.start.getTime()}" data-end-time="${event.end.getTime()}"></div></div>`).join('');
+            return `<div class="accordion-group"><div class="accordion ${expanded ? 'active' : ''}"><div class="header">${title} (${eventList.length})</div><div class="content">${eventsHtml}</div></div></div>`;
         };
-
         accordionsContainer.innerHTML = createAccordion('Ongoing Events', ongoing, true) + createAccordion('Upcoming Events', upcoming);
         if (accordionsContainer.innerHTML === '') accordionsContainer.innerHTML = '<p>No upcoming or active events.</p>';
         
+        // --- BUG FIX STARTS HERE ---
+        // After rendering, find any accordions that should be open by default
+        // and set their max-height to their actual scrollHeight.
+        document.querySelectorAll('.accordion.active .content').forEach(content => {
+            content.style.maxHeight = content.scrollHeight + "px";
+        });
+        // --- BUG FIX ENDS HERE ---
+
         document.querySelectorAll('.accordion .header').forEach(header => {
             header.addEventListener('click', () => {
                 const accordion = header.parentElement;
@@ -252,12 +227,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const now = new Date();
         const serverTime = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours() + serverOffsets[selectedServer], now.getUTCMinutes(), now.getUTCSeconds());
         document.getElementById('server-time').textContent = serverTime.toTimeString().split(' ')[0];
-
         let dailyReset = new Date(serverTime);
         dailyReset.setUTCHours(4, 0, 0, 0);
         if (serverTime >= dailyReset) dailyReset.setUTCDate(dailyReset.getUTCDate() + 1);
         document.querySelector('[data-countdown-target="daily-reset"]').textContent = formatHMS(dailyReset - serverTime);
-
         let weeklyReset = new Date(serverTime);
         const dayOfWeek = weeklyReset.getUTCDay();
         const daysUntilMonday = (dayOfWeek === 1 && serverTime.getUTCHours() < 4) ? 0 : (1 - dayOfWeek + 7) % 7;
@@ -265,7 +238,6 @@ document.addEventListener('DOMContentLoaded', () => {
         weeklyReset.setUTCHours(4, 0, 0, 0);
         if (serverTime >= weeklyReset) weeklyReset.setUTCDate(weeklyReset.getUTCDate() + 7);
         document.querySelector('[data-countdown-target="weekly-reset"]').textContent = formatDHM(weeklyReset - serverTime);
-
         document.querySelectorAll('[data-countdown-target]:not([data-countdown-target="daily-reset"]):not([data-countdown-target="weekly-reset"])').forEach(el => {
             const startTime = new Date(parseInt(el.dataset.startTime));
             const endTime = new Date(parseInt(el.dataset.endTime));
@@ -287,7 +259,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setupSparkleEffect();
         setupHeartExplosion();
         fetchAndRenderData();
-        
         if (countdownInterval) clearInterval(countdownInterval);
         countdownInterval = setInterval(masterTimerTick, 1000);
         masterTimerTick();
