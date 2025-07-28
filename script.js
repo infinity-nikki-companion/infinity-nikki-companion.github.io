@@ -199,27 +199,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const createAccordion = (title, eventList, expanded = false) => {
             if (eventList.length === 0) return '';
             const eventsHtml = eventList.map(event => `<div class="event"><div class="event-title">${event.name}</div><div class="event-description">${event.description}</div><div data-countdown-status data-start-time="${event.start.getTime()}" data-end-time="${event.end.getTime()}"></div><div class="event-countdown countdown-flicker" data-countdown-target data-start-time="${event.start.getTime()}" data-end-time="${event.end.getTime()}"></div></div>`).join('');
-            return `<div class="accordion-group"><div class="accordion ${expanded ? 'active' : ''}"><div class="header">${title} (${eventList.length})</div><div class="content">${eventsHtml}</div></div></div>`;
+            // The content is now wrapped in a 'content-inner' div for the animation to work correctly.
+            return `<div class="accordion-group"><div class="accordion ${expanded ? 'active' : ''}"><div class="header">${title} (${eventList.length})</div><div class="content"><div class="content-inner">${eventsHtml}</div></div></div></div>`;
         };
         accordionsContainer.innerHTML = createAccordion('Ongoing Events', ongoing, true) + createAccordion('Upcoming Events', upcoming);
         if (accordionsContainer.innerHTML === '') accordionsContainer.innerHTML = '<p>No upcoming or active events.</p>';
         
-        // --- BUG FIX STARTS HERE ---
-        // Use a setTimeout to allow the browser time to render the new HTML
-        // before we measure its height for the accordion animation.
-        setTimeout(() => {
-            document.querySelectorAll('.accordion.active .content').forEach(content => {
-                content.style.maxHeight = content.scrollHeight + "px";
-            });
-        }, 0);
-        // --- BUG FIX ENDS HERE ---
-
         document.querySelectorAll('.accordion .header').forEach(header => {
             header.addEventListener('click', () => {
-                const accordion = header.parentElement;
-                accordion.classList.toggle('active');
-                const content = header.nextElementSibling;
-                content.style.maxHeight = accordion.classList.contains('active') ? content.scrollHeight + "px" : "0";
+                header.parentElement.classList.toggle('active');
             });
         });
     }
